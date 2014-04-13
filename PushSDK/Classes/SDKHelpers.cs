@@ -13,7 +13,7 @@ namespace PushSDK.Classes
             return MyToolkit.Environment.Machine.DeviceID;
         }
 
-        public static ToastPush ParsePushData(string url)
+        internal static ToastPush ParsePushData(string url)
         {
             Dictionary<string, string> pushParams = ParseQueryString(Uri.UnescapeDataString(url));
             return new ToastPush

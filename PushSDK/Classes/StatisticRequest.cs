@@ -2,8 +2,8 @@
 
 namespace PushSDK.Classes
 {
-    [JsonObject]
-    public class StatisticRequest
+   [JsonObject]
+    internal class StatisticRequest
     {
         [JsonProperty("application")]
         public string AppId { get; set; }

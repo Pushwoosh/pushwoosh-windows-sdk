@@ -6,7 +6,7 @@ using System.Threading;
 namespace PushSDK.Classes
 {
     [JsonObject]
-    public struct RegistrationRequest
+    internal struct RegistrationRequest
     {
         [JsonProperty("application")]
         public string AppID { get; set; }

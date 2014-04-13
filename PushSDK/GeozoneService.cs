@@ -13,7 +13,7 @@ using Windows.UI.Popups;
 
 namespace PushSDK
 {
-    public class GeozoneService
+    internal class GeozoneService
     {
         private const int MovementThreshold = 100;
         private readonly TimeSpan _minSendTime = TimeSpan.FromMinutes(10);
@@ -21,7 +21,7 @@ namespace PushSDK
         private Geolocator _watcher;
         private Geolocator LazyWatcher
         {
-            get 
+            get
             {
                 if (_watcher == null)
                 {
@@ -42,19 +42,18 @@ namespace PushSDK
             _geozoneRequest.AppId = appId;
 
             LazyWatcher.MovementThreshold = MovementThreshold;
-            LazyWatcher.PositionChanged += WatcherOnPositionChanged;
         }
 
 
         public async void Start()
         {
-             LazyWatcher.PositionChanged += WatcherOnPositionChanged;
+            LazyWatcher.PositionChanged += WatcherOnPositionChanged;
             await LazyWatcher.GetGeopositionAsync(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
         }
 
         public void Stop()
         {
-               LazyWatcher.PositionChanged -= WatcherOnPositionChanged;   
+            LazyWatcher.PositionChanged -= WatcherOnPositionChanged;
         }
 
 
@@ -111,7 +110,6 @@ namespace PushSDK
                     catch (Exception ex)
                     {
                         Debug.WriteLine("Error: " + ex.Message);
-
                         if(OnError != null)
                         {
                             OnError(this, new CustomEventArgs<string> { Result = ex.Message });    

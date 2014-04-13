@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PushSDK
 {
-    public static class Constants
+    internal static class Constants
     {
         // request consts
         public const int DeviceType = 8;

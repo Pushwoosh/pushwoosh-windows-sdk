@@ -16,7 +16,7 @@ namespace PushSDK
         public event EventHandler SuccessefulyRegistered;
         public event EventHandler SuccessefulyUnregistered;
 
-        public event CustomEventHandler<string>  RegisterError;
+        public event CustomEventHandler<string> RegisterError;
         public event CustomEventHandler<string> UnregisterError;
 
         public void Register(string appID, string pushUri)
@@ -48,11 +48,12 @@ namespace PushSDK
 
             byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(request);
 
-			try
-			{
-				// Write the channel URI to the request stream.
-				Stream requestStream = await webRequest.GetRequestStreamAsync();
-				requestStream.Write(requestBytes, 0, requestBytes.Length);
+
+            try
+            {
+                // Write the channel URI to the request stream.
+                Stream requestStream = await webRequest.GetRequestStreamAsync();
+                requestStream.Write(requestBytes, 0, requestBytes.Length);
 
                 // Get the response from the server.
                 WebResponse response = await webRequest.GetResponseAsync();
@@ -86,10 +87,10 @@ namespace PushSDK
             {
                 var errorMessage = ex.Message;
                 Debug.WriteLine("Error: " + errorMessage);
-				if(errorEvent != null)
-				{
-					errorEvent(this, new CustomEventArgs<string> { Result = errorMessage });
-				}
+                if (errorEvent != null)
+                {
+                    errorEvent(this, new CustomEventArgs<string> { Result = errorMessage });
+                }
             }
         }
     }

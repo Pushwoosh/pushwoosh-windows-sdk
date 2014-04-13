@@ -3,7 +3,7 @@
 namespace PushSDK.Classes
 {
     [JsonObject]
-    public class GeozoneRequest
+    internal class GeozoneRequest
     {
         [JsonProperty("application")]
         public string AppId { get; set; }

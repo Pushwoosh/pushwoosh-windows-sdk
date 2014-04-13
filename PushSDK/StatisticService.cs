@@ -68,10 +68,9 @@ namespace PushSDK
             {
                 var errorMessage = ex.Message;
                 Debug.WriteLine("Error: " + errorMessage);
-
-                if(OnError != null)
+                if (OnError != null)
                 {
-                    OnError(this, new CustomEventArgs<string> { Result = errorMessage });    
+                    OnError(this, new CustomEventArgs<string> { Result = errorMessage });
                 }
             }
 

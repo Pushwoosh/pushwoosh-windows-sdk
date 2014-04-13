@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PushSDK
 {
-    public class PushApplicationService
+    internal class PushApplicationService
     {
         public PushApplicationService()
         {

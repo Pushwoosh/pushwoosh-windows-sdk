@@ -2,7 +2,7 @@
 
 namespace PushSDK.Classes
 {
-    public class ToastPush
+    internal class ToastPush
     {
         public string Hash { get; set; }
 

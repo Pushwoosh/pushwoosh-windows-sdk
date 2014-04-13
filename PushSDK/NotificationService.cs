@@ -17,6 +17,10 @@ using Windows.UI.Xaml;
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Controls;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
+
+
 namespace PushSDK
 {
     public class NotificationService
@@ -49,17 +53,17 @@ namespace PushSDK
         /// <summary>
         /// Get services for sending tags
         /// </summary>
-        public TagsService Tags { get; private set; }
+        internal TagsService Tags { get; private set; }
 
         /// <summary>
         /// Get user data from the last push came
         /// </summary>
-        public string UserData { get{return LastPush != null ? LastPush.UserData : string.Empty;}}
+        public string UserData { get { return LastPush != null ? LastPush.UserData : string.Empty; } }
 
         /// <summary>
         /// Get a service to manage Geozone
         /// </summary>
-        public GeozoneService GeoZone { get; private set; }
+        internal GeozoneService GeoZone { get; private set; }
 
         /// <summary>
         /// Get push token
@@ -82,12 +86,12 @@ namespace PushSDK
         /// <summary>
         /// User wants to see push
         /// </summary>
-        public event CustomEventHandler<string> OnPushAccepted;
+        internal event CustomEventHandler<string> OnPushAccepted;
 
         /// <summary>
         /// On push token updated
         /// </summary>
-        public event CustomEventHandler<Uri> OnPushTokenUpdated;
+        internal event CustomEventHandler<Uri> OnPushTokenUpdated;
         #endregion
 
         #region Singleton
@@ -130,7 +134,7 @@ namespace PushSDK
         /// </summary>        
         public async void SubscribeToPushService()
         {
-            
+
             try
             {
                 _notificationChannel = await PushNotificationChannelManager.CreatePushNotificationChannelForApplicationAsync();
@@ -141,7 +145,7 @@ namespace PushSDK
 
                 SubscribeToChannelEvents();
                 SubscribeToService(AppID);
-                
+
             }
 
             catch (Exception ex)
@@ -157,11 +161,52 @@ namespace PushSDK
         /// </summary>
         public void UnsubscribeFromPushes()
         {
-            if (_registrationService == null) 
+            if (_registrationService == null)
                 return;
             _registrationService.Unregister();
         }
 
+        /// <summary>
+        ///  send Tag
+        /// </summary>
+        public void SendTag([ReadOnlyArray()] String[] key,[ReadOnlyArray()]  object[] values)
+        {        
+            Tags.SendRequest(key,values);
+        }
+
+        /// <summary>
+        /// Add tags events
+        /// </summary>
+        ///
+        public void addTagEvents()
+        {
+            Tags.OnError += (sender, args) =>
+               {
+                   MessageDialog dialog = new MessageDialog("Error while sending the tags: \n" + args.Result);
+                   dialog.ShowAsync();
+               };
+            Tags.OnSendingComplete += (sender, args) =>
+             {
+                 MessageDialog dialog = new MessageDialog("Tag has been sent!");
+                 dialog.ShowAsync();
+              
+             };
+        }
+
+         public void StartGeoLocation()
+         {
+             GeoZone.Start();
+         }
+
+         public void StopGeoLocation()
+         {
+             GeoZone.Stop();
+         }
+
+         public void SetHost(string host)
+         {
+             Constants.setHost(host);
+         }
         #endregion
 
         #region private methods
@@ -197,13 +242,13 @@ namespace PushSDK
                     break;
 
                 case PushNotificationType.Tile:
-                  
+
                     notificationContent = e.TileNotification.Content.GetXml();
                     type = "Tile";
                     break;
 
                 case PushNotificationType.Toast:
-             
+
                     notificationContent = e.ToastNotification.Content.GetXml();
                     type = "Toast";
                     break;
@@ -221,29 +266,29 @@ namespace PushSDK
                     try
                     {
                         _pushContent = notificationContent;
-                         PushAccepted();
+                        PushAccepted();
                         var alert = new MessageDialog("Notification content: " + notificationContent, type + " received");
                         alert.ShowAsync();
 
-                     }
+                    }
                     catch (Exception ex)
                     {
                         //Noting todo here
                     }
                 });
-             
+
             Debug.WriteLine("/********************************************************/");
 
- 
+
         }
 
         private void PushAccepted()
         {
             if (OnPushAccepted != null)
-                OnPushAccepted(this, new CustomEventArgs<string> {Result = LastPushContent});
+                OnPushAccepted(this, new CustomEventArgs<string> { Result = LastPushContent });
         }
-        
- 
+
+
         #endregion
     }
 }
