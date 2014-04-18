@@ -33,7 +33,7 @@ namespace PushSDK
 
         private readonly GeozoneRequest _geozoneRequest = new GeozoneRequest();
 
-        public event EventHandler<CustomEventArgs<string>> OnError;
+        public event EventHandler<string> OnError;
 
         private TimeSpan _lastTimeSend;
 
@@ -47,8 +47,15 @@ namespace PushSDK
 
         public async void Start()
         {
-            LazyWatcher.PositionChanged += WatcherOnPositionChanged;
-            await LazyWatcher.GetGeopositionAsync(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            try
+            {
+                LazyWatcher.PositionChanged += WatcherOnPositionChanged;
+                await LazyWatcher.GetGeopositionAsync(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("GeoService: got exception " + ex.Message);
+            }
         }
 
         public void Stop()
@@ -104,7 +111,7 @@ namespace PushSDK
                         if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
                         {
                             Debug.WriteLine("Error: " + errorMessage);
-                            OnError(this, new CustomEventArgs<string> { Result = errorMessage });
+                            OnError(this, errorMessage);
                         }
                     }
                     catch (Exception ex)
@@ -112,7 +119,7 @@ namespace PushSDK
                         Debug.WriteLine("Error: " + ex.Message);
                         if(OnError != null)
                         {
-                            OnError(this, new CustomEventArgs<string> { Result = ex.Message });    
+                            OnError(this, ex.Message);
                         }
                     }
 

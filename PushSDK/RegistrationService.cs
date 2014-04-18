@@ -16,8 +16,8 @@ namespace PushSDK
         public event EventHandler SuccessefulyRegistered;
         public event EventHandler SuccessefulyUnregistered;
 
-        public event CustomEventHandler<string> RegisterError;
-        public event CustomEventHandler<string> UnregisterError;
+        public event EventHandler<string> RegisterError;
+        public event EventHandler<string> UnregisterError;
 
         public void Register(string appID, string pushUri)
         {
@@ -38,7 +38,7 @@ namespace PushSDK
             SendRequest(Constants.UnregisterUrl, SuccessefulyUnregistered, UnregisterError);
         }
 
-        private async void SendRequest(Uri url, EventHandler successEvent, CustomEventHandler<string> errorEvent)
+        private async void SendRequest(Uri url, EventHandler successEvent, EventHandler<string> errorEvent)
         {
             var webRequest = (HttpWebRequest)HttpWebRequest.Create(url);
 
@@ -79,7 +79,7 @@ namespace PushSDK
                 if (!String.IsNullOrEmpty(errorMessage) && errorEvent != null)
                 {
                     Debug.WriteLine("Error: " + errorMessage);
-                    errorEvent(this, new CustomEventArgs<string> { Result = errorMessage });
+                    errorEvent(this, errorMessage);
                 }
             }
 
@@ -89,7 +89,7 @@ namespace PushSDK
                 Debug.WriteLine("Error: " + errorMessage);
                 if (errorEvent != null)
                 {
-                    errorEvent(this, new CustomEventArgs<string> { Result = errorMessage });
+                    errorEvent(this, errorMessage);
                 }
             }
         }

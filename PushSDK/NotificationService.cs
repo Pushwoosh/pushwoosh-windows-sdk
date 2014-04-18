@@ -33,22 +33,9 @@ namespace PushSDK
         private PushNotificationChannel _notificationChannel;
 
         private RegistrationService _registrationService;
-
-        private string _pushContent;
         #endregion
 
         #region public properties
-
-        /// <summary>
-        /// Get content of last push notification
-        /// </summary>
-        public string LastPushContent
-        {
-            get
-            {
-                return _pushContent != null ? _pushContent : string.Empty;
-            }
-        }
 
         /// <summary>
         /// Get services for sending tags
@@ -86,12 +73,8 @@ namespace PushSDK
         /// <summary>
         /// User wants to see push
         /// </summary>
-        internal event CustomEventHandler<string> OnPushAccepted;
+        public event EventHandler<PushNotificationReceivedEventArgs> OnPushAccepted;
 
-        /// <summary>
-        /// On push token updated
-        /// </summary>
-        internal event CustomEventHandler<Uri> OnPushTokenUpdated;
         #endregion
 
         #region Singleton
@@ -174,25 +157,6 @@ namespace PushSDK
             Tags.SendRequest(key,values);
         }
 
-        /// <summary>
-        /// Add tags events
-        /// </summary>
-        ///
-        public void addTagEvents()
-        {
-            Tags.OnError += (sender, args) =>
-               {
-                   MessageDialog dialog = new MessageDialog("Error while sending the tags: \n" + args.Result);
-                   dialog.ShowAsync();
-               };
-            Tags.OnSendingComplete += (sender, args) =>
-             {
-                 MessageDialog dialog = new MessageDialog("Tag has been sent!");
-                 dialog.ShowAsync();
-              
-             };
-        }
-
          public void StartGeoLocation()
          {
              GeoZone.Start();
@@ -265,13 +229,9 @@ namespace PushSDK
                 {
                     try
                     {
-                        _pushContent = notificationContent;
-                        PushAccepted();
-                        var alert = new MessageDialog("Notification content: " + notificationContent, type + " received");
-                        alert.ShowAsync();
-
+                        PushAccepted(e);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         //Noting todo here
                     }
@@ -282,10 +242,10 @@ namespace PushSDK
 
         }
 
-        private void PushAccepted()
+        private void PushAccepted(PushNotificationReceivedEventArgs pushEvent)
         {
             if (OnPushAccepted != null)
-                OnPushAccepted(this, new CustomEventArgs<string> { Result = LastPushContent });
+                OnPushAccepted(this, pushEvent);
         }
 
 

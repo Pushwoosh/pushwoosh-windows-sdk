@@ -21,8 +21,8 @@ namespace PushSDK
 
         private readonly HttpClient _httpClient = new HttpClient();
 
-        public event EventHandler<CustomEventArgs<List<KeyValuePair<string, string>>>> OnSendingComplete;
-        public event EventHandler<CustomEventArgs<string>> OnError;
+        public event EventHandler<List<KeyValuePair<string, string> > > OnSendingComplete;
+        public event EventHandler<string> OnError;
 
         public TagsService(string appId)
         {
@@ -70,14 +70,13 @@ namespace PushSDK
                 if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
                 {
                     Debug.WriteLine("Error: " + errorMessage);
-                    OnError(this, new CustomEventArgs<string> { Result = errorMessage });
+                    OnError(this, errorMessage);
                 }
             }
             catch (Exception ex)
             {
                 if (OnError != null)
                 {
-                    OnError(this, new CustomEventArgs<string> { Result = ex.Message });
                 }
             }
         }
@@ -125,7 +124,7 @@ namespace PushSDK
                 if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
                 {
                     Debug.WriteLine("Error: " + errorMessage);
-                    OnError(this, new CustomEventArgs<string> { Result = errorMessage });
+                    OnError(this, errorMessage);
                 }
             }
 
@@ -133,7 +132,7 @@ namespace PushSDK
             {
                 if(OnError != null)
                 {
-                    OnError(this, new CustomEventArgs<string> { Result = ex.Message });
+                    OnError(this, ex.Message);
                 }
             }
         }
@@ -176,10 +175,10 @@ namespace PushSDK
                     skippedTags = jItems.Select(jItem => new KeyValuePair<string, string>(jItem.Value<string>("tag"), jItem.Value<string>("reason"))).ToList();
                 }
 
-                OnSendingComplete(this, new CustomEventArgs<List<KeyValuePair<string, string>>> { Result = skippedTags });
+                OnSendingComplete(this, skippedTags);
             }
             else
-                OnError(this, new CustomEventArgs<string> { Result = JsonHelpers.GetStatusMessage(jRoot) });
+                OnError(this, JsonHelpers.GetStatusMessage(jRoot));
         }
     }
 

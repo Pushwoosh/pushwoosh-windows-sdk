@@ -102,7 +102,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Classes\CustomEventArgs.cs" />
     <Compile Include="Classes\GeozoneRequest.cs" />
     <Compile Include="Classes\JsonHelpers.cs" />
     <Compile Include="Classes\StatisticRequest.cs" />

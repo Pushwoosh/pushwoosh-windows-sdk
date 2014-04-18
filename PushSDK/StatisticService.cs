@@ -15,7 +15,7 @@ namespace PushSDK
         private readonly StatisticRequest _request;
         private readonly HttpClient _httpClient = new HttpClient();
 
-        public event EventHandler<CustomEventArgs<string>> OnError;
+        public event EventHandler<string> OnError;
 
         public StatisticService(string appId)
         {
@@ -60,7 +60,7 @@ namespace PushSDK
                 if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
                 {
                     Debug.WriteLine("Error: " + errorMessage);
-                    OnError(this, new CustomEventArgs<string> { Result = errorMessage });
+                    OnError(this, errorMessage);
                 }
             }
 
@@ -70,7 +70,7 @@ namespace PushSDK
                 Debug.WriteLine("Error: " + errorMessage);
                 if (OnError != null)
                 {
-                    OnError(this, new CustomEventArgs<string> { Result = errorMessage });
+                    OnError(this, errorMessage);
                 }
             }
 
