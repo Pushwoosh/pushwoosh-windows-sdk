@@ -3,14 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using Windows.Networking.Connectivity;
 
 namespace PushSDK.Classes
 {
     public static class SDKHelpers
     {
+        private static string _deviceId;
+
         public static string GetDeviceUniqueId()
         {
-            return MyToolkit.Environment.Machine.DeviceID;
+            if (_deviceId == null)
+            {
+                _deviceId = NetworkInformation.GetConnectionProfiles().
+                    Where(p => p.GetNetworkConnectivityLevel() != NetworkConnectivityLevel.ConstrainedInternetAccess).
+                    Select(p => p.NetworkAdapter.NetworkAdapterId).
+                    OrderBy(p => p).First().ToString();
+            }
+            return _deviceId;
         }
 
         internal static ToastPush ParsePushData(string url)
