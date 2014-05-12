@@ -118,9 +118,6 @@
     <Compile Include="TagsService.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MyToolkit">
-      <HintPath>..\packages\MyToolkit.1.14.0\lib\netcore45\MyToolkit.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.5.0.5\lib\netcore45\Newtonsoft.Json.dll</HintPath>
     </Reference>
