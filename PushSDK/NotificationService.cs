@@ -23,7 +23,7 @@ using System.Text;
 
 namespace PushSDK
 {
-    public class NotificationService
+    public sealed class NotificationService
     {
         #region private fields
         private readonly string _pushPage;
