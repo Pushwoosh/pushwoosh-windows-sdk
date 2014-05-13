@@ -2,7 +2,7 @@
 
 namespace PushSDK.Classes
 {
-    public static class JsonHelpers
+    internal static class JsonHelpers
     {
         internal static int GetStatusCode(JObject jRoot)
         {

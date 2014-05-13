@@ -7,7 +7,7 @@ using Windows.Networking.Connectivity;
 
 namespace PushSDK.Classes
 {
-    public static class SDKHelpers
+    internal static class SDKHelpers
     {
         private static string _deviceId;
 
