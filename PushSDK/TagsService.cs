@@ -77,6 +77,7 @@ namespace PushSDK
             {
                 if (OnError != null)
                 {
+                    OnError(this, ex.Message);
                 }
             }
         }

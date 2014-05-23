@@ -28,37 +28,38 @@ namespace PushSDK
         #region private fields
         private readonly string _pushPage;
 
-        private readonly Collection<Uri> _tileTrustedServers;
-
         private PushNotificationChannel _notificationChannel;
-
         private RegistrationService _registrationService;
         #endregion
 
         #region public properties
 
         /// <summary>
-        /// Get services for sending tags
-        /// </summary>
-        internal TagsService Tags { get; private set; }
-
-        /// <summary>
-        /// Get user data from the last push came
+        /// Get user data from the last push
         /// </summary>
         public string UserData { get { return LastPush != null ? LastPush.UserData : string.Empty; } }
-
-        /// <summary>
-        /// Get a service to manage Geozone
-        /// </summary>
-        internal GeozoneService GeoZone { get; private set; }
 
         /// <summary>
         /// Get push token
         /// </summary>
         public string PushToken { get; private set; }
+
+        /// <summary>
+        /// Get unique hardware ID, used in communication with Pushwoosh Remote API
+        /// </summary>
+        public string DeviceUniqueID { get { return SDKHelpers.GetDeviceUniqueId(); } }
         #endregion
 
         #region internal properties
+        /// <summary>
+        /// Get services for sending tags
+        /// </summary>
+        internal TagsService Tags { get; private set; }
+
+        /// <summary>
+        /// Get a service to manage Geozone
+        /// </summary>
+        internal GeozoneService GeoZone { get; private set; }
 
         private string AppID { get; set; }
 
@@ -75,15 +76,25 @@ namespace PushSDK
         /// </summary>
         public event EventHandler<PushNotificationReceivedEventArgs> OnPushAccepted;
 
+        /// <summary>
+        /// Push registration succeeded
+        /// </summary>
+        public event EventHandler<string> OnPushTokenReceived;
+
+        /// <summary>
+        /// Push registration failed
+        /// </summary>
+        public event EventHandler<string> OnPushTokenFailed;
+
         #endregion
 
         #region Singleton
 
         private static NotificationService _instance;
 
-        public static NotificationService GetCurrent(string appID, string pushPage, IEnumerable<string> tileTrustedServers)
+        public static NotificationService GetCurrent(string appID, string pushPage)
         {
-            return _instance ?? (_instance = tileTrustedServers == null ? new NotificationService(appID, pushPage) : new NotificationService(appID, pushPage, tileTrustedServers));
+            return _instance ?? (_instance = new NotificationService(appID, pushPage));
         }
 
         #endregion
@@ -94,29 +105,23 @@ namespace PushSDK
         {
             _pushPage = pushPage;
             AppID = appID;
+            PushToken = "";
 
             Statistic = new StatisticService(appID);
             Tags = new TagsService(appID);
             GeoZone = new GeozoneService(appID);
         }
 
-        /// <param name="appID">PushWoosh application id</param>
-        /// <param name="pushPage">Page on which the navigation is when receiving toast push notification </param>
-        /// <param name="tileTrustedServers">Uris of trusted servers for tile images</param>
-        private NotificationService(string appID, string pushPage, IEnumerable<string> tileTrustedServers)
-            : this(appID, pushPage)
-        {
-            _tileTrustedServers = new Collection<Uri>(tileTrustedServers.Select(s => new Uri(s, UriKind.Absolute)).ToList());
-        }
-
         #region public methods
-
 
         /// <summary>
         /// Creates push channel and regestrite it at pushwoosh server
         /// </summary>        
         public async void SubscribeToPushService()
         {
+            //do nothing if already subscribed
+            if (_notificationChannel != null)
+                return;
 
             try
             {
@@ -126,17 +131,21 @@ namespace PushSDK
 
                 Debug.WriteLine("Push Notification channel created successfully: " + PushToken);
 
-                SubscribeToChannelEvents();
-                SubscribeToService(AppID);
+                //Register to UriUpdated event - occurs when channel successfully opens
+                _notificationChannel.PushNotificationReceived += ChannelShellToastNotificationReceived;
 
+                //Register device on Pushwoosh
+                SubscribeToPushwoosh(AppID);
             }
 
             catch (Exception ex)
             {
                 Debug.WriteLine("Exception occured while creating channel: " + ex.Message);
                 // Could not create a channel. 
-            }
 
+                if(OnPushTokenFailed != null)
+                    OnPushTokenFailed(this, ex.Message);
+            }
         }
 
         /// <summary>
@@ -144,8 +153,12 @@ namespace PushSDK
         /// </summary>
         public void UnsubscribeFromPushes()
         {
-            if (_registrationService == null)
+            if (_registrationService == null || _notificationChannel == null)
                 return;
+
+            PushToken = "";
+            _notificationChannel.Close();
+            _notificationChannel = null;
             _registrationService.Unregister();
         }
 
@@ -175,19 +188,29 @@ namespace PushSDK
 
         #region private methods
 
-        private void SubscribeToService(string appID)
+        private void SendTokenToPushwooshSuccess(object sender, object args)
         {
-            if (_registrationService == null)
-                _registrationService = new RegistrationService();
-
-            _registrationService.Register(appID, _notificationChannel.Uri);
+            if (OnPushTokenReceived != null)
+                OnPushTokenReceived(this, _notificationChannel.Uri);
         }
 
-        private void SubscribeToChannelEvents()
+        private void SendTokenToPushwooshFailed(object sender, string message)
         {
-            //Register to UriUpdated event - occurs when channel successfully opens
-            _notificationChannel.PushNotificationReceived += ChannelShellToastNotificationReceived;
+            if (OnPushTokenFailed != null)
+                OnPushTokenFailed(this, message);
+        }
 
+        private void SubscribeToPushwoosh(string appID)
+        {
+            if (_registrationService == null)
+            {
+                _registrationService = new RegistrationService();
+
+                _registrationService.SuccessefulyRegistered += SendTokenToPushwooshSuccess;
+                _registrationService.RegisterError += SendTokenToPushwooshFailed;
+            }
+
+            _registrationService.Register(appID, _notificationChannel.Uri);
         }
 
         private void ChannelShellToastNotificationReceived(PushNotificationChannel sender, PushNotificationReceivedEventArgs e)

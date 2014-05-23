@@ -8,15 +8,12 @@ namespace PushSDK
     {
         public PushApplicationService()
         {
-            TileTrustedServers = new List<string>();
-
         }
 
-        public PushApplicationService(string _PWAppId, string _PushPage, List<string> _TileTrustedServers, string _ServiceName)
+        public PushApplicationService(string _PWAppId, string _PushPage, string _ServiceName)
         {
             this.PWAppId = _PWAppId;
             this.PushPage = _PushPage;
-            this.TileTrustedServers = _TileTrustedServers;
             this.ServiceName = _ServiceName;
         }
 
@@ -29,7 +26,7 @@ namespace PushSDK
                     if (string.IsNullOrEmpty(PWAppId) || PWAppId == "")
                         throw new ArgumentNullException("PWAppId");
 
-                    return NotificationService.GetCurrent(PWAppId, PushPage, TileTrustedServers);
+                    return NotificationService.GetCurrent(PWAppId, PushPage);
                 }
                 catch
                 {
@@ -48,11 +45,6 @@ namespace PushSDK
         /// [Optional] Page on which the navigation is when receiving toast push notification
         /// </summary>
         public string PushPage { get; set; }
-
-        /// <summary>
-        /// [Optional] Get or set trusted servers for receive tile notification
-        /// </summary>
-        public List<string> TileTrustedServers { get; set; }
 
         /// <summary>
         /// [Optional] The name that the web service uses to associate itself with the Push Notification Service.
