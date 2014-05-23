@@ -13,7 +13,7 @@ using Windows.UI.Popups;
 
 namespace PushSDK
 {
-    internal class GeozoneService
+    internal class GeozoneService : PushwooshAPIServiceBase
     {
         private const int MovementThreshold = 100;
         private readonly TimeSpan _minSendTime = TimeSpan.FromMinutes(10);
@@ -40,8 +40,6 @@ namespace PushSDK
         public GeozoneService(string appId)
         {
             _geozoneRequest.AppId = appId;
-
-            LazyWatcher.MovementThreshold = MovementThreshold;
         }
 
 
@@ -49,6 +47,7 @@ namespace PushSDK
         {
             try
             {
+                LazyWatcher.MovementThreshold = MovementThreshold;
                 LazyWatcher.PositionChanged += WatcherOnPositionChanged;
                 await LazyWatcher.GetGeopositionAsync(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
             }
@@ -63,7 +62,6 @@ namespace PushSDK
             LazyWatcher.PositionChanged -= WatcherOnPositionChanged;
         }
 
-
         private async void WatcherOnPositionChanged(Geolocator sender, PositionChangedEventArgs e)
         {
             try
@@ -73,61 +71,20 @@ namespace PushSDK
                     _geozoneRequest.Lat = e.Position.Coordinate.Latitude;
                     _geozoneRequest.Lon = e.Position.Coordinate.Longitude;
 
-                    var webRequest = (HttpWebRequest)HttpWebRequest.Create(Constants.GeozoneUrl);
-
-                    webRequest.Method = "POST";
-                    webRequest.ContentType = "application/x-www-form-urlencoded";
-                    string request = String.Format("{{ \"request\":{0}}}", JsonConvert.SerializeObject(_geozoneRequest));
-
-                    byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(request);
-
-                    try
-                    {
-                        // Write the channel URI to the request stream.
-                        Stream requestStream = await webRequest.GetRequestStreamAsync();
-                        requestStream.Write(requestBytes, 0, requestBytes.Length);
-
-                        // Get the response from the server.
-                        WebResponse response = await webRequest.GetResponseAsync();
-                        StreamReader requestReader = new StreamReader(response.GetResponseStream());
-                        String webResponse = requestReader.ReadToEnd();
-
-                        string errorMessage = String.Empty;
-
-                        Debug.WriteLine("Response: " + webResponse);
-
-                        JObject jRoot = JObject.Parse(webResponse);
-                        int code = JsonHelpers.GetStatusCode(jRoot);
-
-                        if (JsonHelpers.GetStatusCode(jRoot) == 200)
-                        {
-                            double dist = jRoot["response"].Value<double>("distance");
+                    await InternalSendRequestAsync(_geozoneRequest, Constants.GeozoneUrl,
+                        (obj, arg) => {
+                            double dist = arg["response"].Value<double>("distance");
                             if (dist > 0)
                                 LazyWatcher.MovementThreshold = dist / 2;
-                        }
-                        else
-                            errorMessage = JsonHelpers.GetStatusMessage(jRoot);
-
-                        if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
-                        {
-                            Debug.WriteLine("Error: " + errorMessage);
-                            OnError(this, errorMessage);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Error: " + ex.Message);
-                        if(OnError != null)
-                        {
-                            OnError(this, ex.Message);
-                        }
-                    }
+                        }, OnError);
 
                     _lastTimeSend = DateTime.Now.TimeOfDay;
                 }
             }
-
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error when handling position change: " + ex.ToString());
+            }
         }
     }
 }

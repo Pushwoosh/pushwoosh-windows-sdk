@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PushSDK
 {
@@ -21,7 +17,7 @@ namespace PushSDK
 
         public static void setHost(string newHost)
         {
-            Host=newHost;
+            Host = newHost;
         }
         public static string RequestDomain
         {

@@ -2,7 +2,7 @@
 
 namespace PushSDK.Classes
 {
-   [JsonObject]
+    [JsonObject]
     internal class StatisticRequest
     {
         [JsonProperty("application")]
@@ -13,5 +13,8 @@ namespace PushSDK.Classes
         {
             get { return SDKHelpers.GetDeviceUniqueId(); }
         }
+
+        [JsonProperty("hash")]
+        public string Hash { get; set; }
     }
 }

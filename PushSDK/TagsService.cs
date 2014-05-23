@@ -14,14 +14,11 @@ using System.Runtime.CompilerServices;
 namespace PushSDK
 {
 
-    internal class TagsService
+    internal class TagsService : PushwooshAPIServiceBase
     {
         private readonly string _appId;
-        private static readonly char[] NewLineChars = Environment.NewLine.ToCharArray();
 
-        private readonly HttpClient _httpClient = new HttpClient();
-
-        public event EventHandler<List<KeyValuePair<string, string> > > OnSendingComplete;
+        public event EventHandler<List<KeyValuePair<string, string> > > OnSuccess;
         public event EventHandler<string> OnError;
 
         public TagsService(string appId)
@@ -33,112 +30,34 @@ namespace PushSDK
         /// Sending tag to server
         /// </summary>
         /// <param name="tagList">Tags list</param>
-        public async void SendRequest(String[] key, object[] values)
+        public async void SendRequest(List<KeyValuePair<string,object>> tagList)
         {
-            var webRequest = (HttpWebRequest)HttpWebRequest.Create(Constants.TagsUrl);
-            webRequest.Method = "POST";
-            webRequest.ContentType = "application/x-www-form-urlencoded";
-
-            string request = BuildRequest(key, values);
-
-            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(request);
-
-            try
-            {
-                // Write the channel URI to the request stream.
-                Stream requestStream = await webRequest.GetRequestStreamAsync();
-                requestStream.Write(requestBytes, 0, requestBytes.Length);
-
-                // Get the response from the server.
-                WebResponse response = await webRequest.GetResponseAsync();
-                StreamReader requestReader = new StreamReader(response.GetResponseStream());
-                String webResponse = requestReader.ReadToEnd();
-
-                string errorMessage = String.Empty;
-
-                Debug.WriteLine("Response: " + webResponse);
-
-                JObject jRoot = JObject.Parse(webResponse);
-                int code = JsonHelpers.GetStatusCode(jRoot);
-                if (code == 200 || code == 103)
-                {
-                    UploadStringCompleted(webResponse);
-                }
-                else
-                    errorMessage = JsonHelpers.GetStatusMessage(jRoot);
-
-                if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
-                {
-                    Debug.WriteLine("Error: " + errorMessage);
-                    OnError(this, errorMessage);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (OnError != null)
-                {
-                    OnError(this, ex.Message);
-                }
-            }
+            JObject requestJson = BuildRequest(tagList);
+            await InternalSendRequestAsync(requestJson, Constants.TagsUrl, (sender, arg) => { UploadStringCompleted(arg); }, OnError);
         }
-
 
         /// <summary>
         /// Sending tag to server
         /// </summary>
-        /// <param name="jTagList">tag format: [tagKey:tagValue]</param>
-        public async void SendRequest(string jTagList)
+        /// <param name="tagList">Tags list</param>
+        public async void SendRequest(String[] key, object[] values)
         {
-            var webRequest = (HttpWebRequest)HttpWebRequest.Create(Constants.TagsUrl);
-
-            webRequest.Method = "POST";
-            webRequest.ContentType = "application/x-www-form-urlencoded";
-
-            string request = JsonConvert.SerializeObject(BuildRequest(jTagList));
-
-            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(request);
-
-            try
-            {
-                // Write the channel URI to the request stream.
-                Stream requestStream = await webRequest.GetRequestStreamAsync();
-                requestStream.Write(requestBytes, 0, requestBytes.Length);
-
-                // Get the response from the server.
-                WebResponse response = await webRequest.GetResponseAsync();
-                StreamReader requestReader = new StreamReader(response.GetResponseStream());
-                String webResponse = requestReader.ReadToEnd();
-
-                string errorMessage = String.Empty;
-
-                Debug.WriteLine("Response: " + webResponse);
-
-                JObject jRoot = JObject.Parse(webResponse);
-                int code = JsonHelpers.GetStatusCode(jRoot);
-                if (code == 200 || code == 103)
-                {
-                    UploadStringCompleted(webResponse);
-                }
-                else
-                    errorMessage = JsonHelpers.GetStatusMessage(jRoot);
-
-                if (!String.IsNullOrEmpty(errorMessage) && OnError != null)
-                {
-                    Debug.WriteLine("Error: " + errorMessage);
-                    OnError(this, errorMessage);
-                }
-            }
-
-            catch (Exception ex)
-            {
-                if(OnError != null)
-                {
-                    OnError(this, ex.Message);
-                }
-            }
+            JObject requestJson = BuildRequest(key, values);
+            await InternalSendRequestAsync(requestJson, Constants.TagsUrl, (sender, arg) => { UploadStringCompleted(arg); }, OnError);
         }
 
-        private string BuildRequest(String[] key, object[] values)
+        private JObject BuildRequest(IEnumerable<KeyValuePair<string, object>> tagList)
+        {
+            JObject tags = new JObject();
+            foreach (var tag in tagList)
+            {
+                tags.Add(new JProperty(tag.Key, tag.Value));
+            }
+
+            return BuildRequest(tags);
+        }
+
+        private JObject BuildRequest(String[] key, object[] values)
         {
             JObject tags = new JObject();
 
@@ -147,24 +66,19 @@ namespace PushSDK
             {
                 tags.Add(new JProperty(key[i], values[i]));
             }
-            return BuildRequest(tags.ToString());
+            return BuildRequest(tags);
         }
 
-        private string BuildRequest(string tags)
+        private JObject BuildRequest(JObject tags)
         {
-            return (new JObject(
-               new JProperty("request",
-                             new JObject(
-                                 new JProperty("application", _appId),
-                                 new JProperty("hwid", SDKHelpers.GetDeviceUniqueId()),
-                                 new JProperty("tags", JObject.Parse(tags)))))).ToString().Replace("\r\n", "");
-
+            return new JObject(
+                        new JProperty("application", _appId),
+                        new JProperty("hwid", SDKHelpers.GetDeviceUniqueId()),
+                        new JProperty("tags", tags));
         }
 
-        private void UploadStringCompleted(string responseBodyAsText)
+        private void UploadStringCompleted(JObject jRoot)
         {
-
-            JObject jRoot = JObject.Parse(responseBodyAsText);
             if (JsonHelpers.GetStatusCode(jRoot) == 200)
             {
                 var skippedTags = new List<KeyValuePair<string, string>>();
@@ -172,14 +86,17 @@ namespace PushSDK
                 if (jRoot["response"].HasValues)
                 {
                     JArray jItems = jRoot["response"]["skipped"] as JArray;
-
                     skippedTags = jItems.Select(jItem => new KeyValuePair<string, string>(jItem.Value<string>("tag"), jItem.Value<string>("reason"))).ToList();
                 }
 
-                OnSendingComplete(this, skippedTags);
+                if(OnSuccess != null)
+                    OnSuccess(this, skippedTags);
             }
             else
-                OnError(this, JsonHelpers.GetStatusMessage(jRoot));
+            {
+                if(OnError != null)
+                    OnError(this, JsonHelpers.GetStatusMessage(jRoot));
+            }
         }
     }
 
