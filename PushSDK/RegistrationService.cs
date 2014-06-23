@@ -38,7 +38,7 @@ namespace PushSDK
 
         private async void SendRequest(Uri url, EventHandler successEvent, EventHandler<string> errorEvent)
         {
-            await InternalSendRequestAsync(_request, url, (sender, arg) => { successEvent(this, null); }, errorEvent);
+            await InternalSendRequestAsync(_request, url, (sender, arg) => { if(successEvent != null) successEvent(this, null); }, errorEvent);
         }
     }
 }

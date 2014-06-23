@@ -19,6 +19,8 @@ using Windows.UI.Xaml.Controls;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using Windows.Storage;
+using Newtonsoft.Json.Linq;
 
 
 namespace PushSDK
@@ -26,7 +28,6 @@ namespace PushSDK
     public sealed class NotificationService
     {
         #region private fields
-        private readonly string _pushPage;
 
         private PushNotificationChannel _notificationChannel;
         private RegistrationService _registrationService;
@@ -94,22 +95,34 @@ namespace PushSDK
 
         public static NotificationService GetCurrent(string appID, string pushPage)
         {
-            return _instance ?? (_instance = new NotificationService(appID, pushPage));
+            if(appID == null)
+                appID = (String) ApplicationData.Current.LocalSettings.Values["com.pushwoosh.appid"];
+
+            if (appID == null)
+                return null;
+
+            if (appID != (String)ApplicationData.Current.LocalSettings.Values["com.pushwoosh.appid"])
+                _instance = null;
+
+            return _instance ?? (_instance = new NotificationService(appID));
         }
 
         #endregion
 
         /// <param name="appID">PushWoosh application id</param>
         /// <param name="pushPage">Page on which the navigation is when receiving toast push notification </param>
-        private NotificationService(string appID, string pushPage)
+        private NotificationService(string appID)
         {
-            _pushPage = pushPage;
             AppID = appID;
+            ApplicationData.Current.LocalSettings.Values["com.pushwoosh.appid"] = appID;
+
             PushToken = "";
 
             Statistic = new StatisticService(appID);
             Tags = new TagsService(appID);
             GeoZone = new GeozoneService(appID);
+
+            Statistic.SendAppOpen();
         }
 
         #region public methods
@@ -170,20 +183,39 @@ namespace PushSDK
             Tags.SendRequest(key,values);
         }
 
-         public void StartGeoLocation()
-         {
-             GeoZone.Start();
-         }
+        public void StartGeoLocation()
+        {
+            GeoZone.Start();
+        }
 
-         public void StopGeoLocation()
-         {
-             GeoZone.Stop();
-         }
+        public void StopGeoLocation()
+        {
+            GeoZone.Stop();
+        }
 
-         public void SetHost(string host)
-         {
-             Constants.setHost(host);
-         }
+        public void SetHost(string host)
+        {
+            Constants.setHost(host);
+        }
+
+        public void HandleStartPushStat(string arguments)
+        {
+            if (arguments != null)
+            {
+                try
+                {
+                    //Sample to handle push custom data on start
+                    String args = System.Net.WebUtility.UrlDecode(arguments);
+                    JObject jRoot = JObject.Parse(args);
+                    if(jRoot.GetValue("pushwoosh") != null)
+                    {
+                        Statistic.SendPushOpen(null);
+                    }
+                }
+                catch { }
+            }
+        }
+
         #endregion
 
         #region private methods
@@ -217,6 +249,8 @@ namespace PushSDK
         {
             Debug.WriteLine("/********************************************************/");
             Debug.WriteLine("Incoming Notification: " + DateTime.Now.ToString());
+
+            Statistic.SendPushOpen(null);
 
             String notificationContent = String.Empty;
 

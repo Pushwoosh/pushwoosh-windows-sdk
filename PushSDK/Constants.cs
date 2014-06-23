@@ -11,6 +11,7 @@ namespace PushSDK
         private const string RegisterRequest = "registerDevice";
         private const string UnregisterRequest = "unregisterDevice";
         private const string StatisticRequest = "pushStat";
+        private const string AppOpenRequest = "applicationOpen";
         private const string TagsRequest = "setTags";
         private const string GeozoneRequest = "getNearestZone";
 
@@ -42,6 +43,11 @@ namespace PushSDK
         public static Uri StatisticUrl
         {
             get { return new Uri(RequestDomain + StatisticRequest, UriKind.Absolute); }
+        }
+
+        public static Uri AppOpenUrl
+        {
+            get { return new Uri(RequestDomain + AppOpenRequest, UriKind.Absolute); }
         }
 
         public static Uri TagsUrl
