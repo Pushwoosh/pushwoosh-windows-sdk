@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using Windows.Networking.Connectivity;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace PushSDK.Classes
 {
@@ -15,10 +16,17 @@ namespace PushSDK.Classes
         {
             if (_deviceId == null)
             {
-                _deviceId = NetworkInformation.GetConnectionProfiles().
-                    Where(p => p.GetNetworkConnectivityLevel() != NetworkConnectivityLevel.ConstrainedInternetAccess).
-                    Select(p => p.NetworkAdapter.NetworkAdapterId).
-                    OrderBy(p => p).First().ToString();
+                try
+                {
+                    _deviceId = NetworkInformation.GetConnectionProfiles().
+                        Where(p => p.GetNetworkConnectivityLevel() != NetworkConnectivityLevel.ConstrainedInternetAccess).
+                        Select(p => p.NetworkAdapter.NetworkAdapterId).
+                        OrderBy(p => p).First().ToString();
+                }
+                catch
+                {
+                    _deviceId = BitConverter.ToString(Windows.System.Profile.HardwareIdentification.GetPackageSpecificToken(null).Id.ToArray());
+                }
             }
 
             return _deviceId;
