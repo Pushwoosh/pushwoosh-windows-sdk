@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using PushSDK.Classes;
 using System.IO;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace PushSDK
 {
@@ -13,24 +14,20 @@ namespace PushSDK
     {
         protected async Task InternalSendRequestAsync(object request, Uri url, EventHandler<JObject> successEvent, EventHandler<string> errorEvent)
         {
-            var webRequest = (HttpWebRequest)HttpWebRequest.Create(url);
-
-            webRequest.Method = "POST";
-            webRequest.ContentType = "application/x-www-form-urlencoded";
-
+            HttpClient httpClient = new HttpClient();
             string requestString = String.Format("{{ \"request\":{0}}}", JsonConvert.SerializeObject(request));
-            byte[] requestBytes = System.Text.Encoding.UTF8.GetBytes(requestString);
-
+            HttpContent httpContent = new StringContent(requestString, System.Text.Encoding.UTF8, "application/x-www-form-urlencoded");
+            string webResponse = null;
             try
             {
-                // Write the channel URI to the request stream.
-                Stream requestStream = await webRequest.GetRequestStreamAsync();
-                requestStream.Write(requestBytes, 0, requestBytes.Length);
-
-                // Get the response from the server.
-                WebResponse response = await webRequest.GetResponseAsync();
-                StreamReader requestReader = new StreamReader(response.GetResponseStream());
-                String webResponse = requestReader.ReadToEnd();
+                HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    byte[] responseBytes = await response.Content.ReadAsByteArrayAsync();
+                    webResponse = new string(System.Text.Encoding.UTF8.GetChars(responseBytes));
+                    // haven't tested this, but should work as well: 
+                    // webResponse = await response.Content.ReadAsStringAsync();
+                }
 
                 string errorMessage = String.Empty;
                 Debug.WriteLine("Response: " + webResponse);
