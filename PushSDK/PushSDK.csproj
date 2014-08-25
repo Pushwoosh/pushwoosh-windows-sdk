@@ -102,26 +102,32 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Classes\GeozoneRequest.cs" />
     <Compile Include="Classes\JsonHelpers.cs" />
-    <Compile Include="Classes\StatisticRequest.cs" />
+    <Compile Include="Classes\Request\AppEventRequest.cs" />
+    <Compile Include="Classes\Request\AppOpenRequest.cs" />
+    <Compile Include="Classes\Request\BaseRequest.cs" />
+    <Compile Include="Classes\Request\GeozoneRequest.cs" />
+    <Compile Include="Classes\Request\GetTagsRequest.cs" />
+    <Compile Include="Classes\Request\RegistrationRequest.cs" />
+    <Compile Include="Classes\Request\SendBadgeRequest.cs" />
+    <Compile Include="Classes\Request\SendPurchaseRequest.cs" />
+    <Compile Include="Classes\Request\SetTagsRequest.cs" />
+    <Compile Include="Classes\Request\StatisticRequest.cs" />
+    <Compile Include="Classes\Request\UnregisterRequest.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="GeozoneService.cs" />
     <Compile Include="NotificationService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Classes\RegistrationRequest.cs" />
     <Compile Include="PushwooshAPIServiceBase.cs" />
-    <Compile Include="RegistrationService.cs" />
     <Compile Include="Classes\SDKHelpers.cs" />
     <Compile Include="Classes\ToastPush.cs" />
-    <Compile Include="StatisticService.cs" />
-    <Compile Include="TagsService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.5.0.5\lib\netcore45\Newtonsoft.Json.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '11.0' ">
     <VisualStudioVersion>11.0</VisualStudioVersion>
   </PropertyGroup>

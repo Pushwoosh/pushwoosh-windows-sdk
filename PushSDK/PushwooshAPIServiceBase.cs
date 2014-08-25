@@ -12,8 +12,10 @@ namespace PushSDK
 {
     internal abstract class PushwooshAPIServiceBase
     {
-        protected async Task InternalSendRequestAsync(object request, Uri url, EventHandler<JObject> successEvent, EventHandler<string> errorEvent)
+        public static async Task InternalSendRequestAsync(BaseRequest request, EventHandler<JObject> successEvent, EventHandler<string> errorEvent)
         {
+            Uri url = new Uri(Constants.RequestDomain + request.GetMethodName(), UriKind.Absolute);
+    
             HttpClient httpClient = new HttpClient();
             string requestString = String.Format("{{ \"request\":{0}}}", JsonConvert.SerializeObject(request));
             HttpContent httpContent = new StringContent(requestString, System.Text.Encoding.UTF8, "application/x-www-form-urlencoded");
@@ -36,21 +38,23 @@ namespace PushSDK
                 int code = JsonHelpers.GetStatusCode(jRoot);
                 if (code == 200 || code == 103)
                 {
+                    request.ParseResponse(jRoot);
                     if (successEvent != null)
                     {
-                        successEvent(this, jRoot);
+                        successEvent(null, jRoot);
                     }
                 }
                 else
                 {
                     errorMessage = JsonHelpers.GetStatusMessage(jRoot);
+                    request.ErrorMessage = errorMessage;
                 }
 
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
                     Debug.WriteLine("Error: " + errorMessage);
                     if (errorEvent != null)
-                        errorEvent(this, errorMessage);
+                        errorEvent(null, errorMessage);
                 }
             }
             catch (Exception ex)
@@ -59,7 +63,7 @@ namespace PushSDK
                 Debug.WriteLine("Error: " + errorMessage);
                 if (errorEvent != null)
                 {
-                    errorEvent(this, errorMessage);
+                    errorEvent(null, errorMessage);
                 }
             }
         }

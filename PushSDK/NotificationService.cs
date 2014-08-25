@@ -30,7 +30,6 @@ namespace PushSDK
         #region private fields
 
         private PushNotificationChannel _notificationChannel;
-        private RegistrationService _registrationService;
         #endregion
 
         #region public properties
@@ -38,7 +37,7 @@ namespace PushSDK
         /// <summary>
         /// Get user data from the last push
         /// </summary>
-        public string UserData { get { return LastPush != null ? LastPush.UserData : string.Empty; } }
+        public string UserData { get; private set; }
 
         /// <summary>
         /// Get push token
@@ -52,10 +51,6 @@ namespace PushSDK
         #endregion
 
         #region internal properties
-        /// <summary>
-        /// Get services for sending tags
-        /// </summary>
-        internal TagsService Tags { get; private set; }
 
         /// <summary>
         /// Get a service to manage Geozone
@@ -64,9 +59,8 @@ namespace PushSDK
 
         private string AppID { get; set; }
 
-        private StatisticService Statistic { get; set; }
-
-        internal ToastPush LastPush { get; set; }
+		internal PushNotificationReceivedEventArgs LastPush { get; set; }
+		private bool hasPushOnStart = false;
 
         #endregion
 
@@ -93,6 +87,12 @@ namespace PushSDK
 
         private static NotificationService _instance;
 
+        // may return null if no instance present
+        public static NotificationService GetCurrent()
+        {
+            return _instance;
+        }
+
         public static NotificationService GetCurrent(string appID, string pushPage)
         {
             if(appID == null)
@@ -118,11 +118,10 @@ namespace PushSDK
 
             PushToken = "";
 
-            Statistic = new StatisticService(appID);
-            Tags = new TagsService(appID);
             GeoZone = new GeozoneService(appID);
 
-            Statistic.SendAppOpen();
+            AppOpenRequest request = new AppOpenRequest { AppId = appID };
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
         }
 
         #region public methods
@@ -159,28 +158,50 @@ namespace PushSDK
                 if(OnPushTokenFailed != null)
                     OnPushTokenFailed(this, ex.Message);
             }
+
+			if(OnPushAccepted != null && hasPushOnStart)
+			{
+				OnPushAccepted(this, null);
+			}
         }
 
         /// <summary>
         /// Unsubscribe from pushes at pushwoosh server
         /// </summary>
-        public void UnsubscribeFromPushes()
+        public void UnsubscribeFromPushes(EventHandler<string> success, EventHandler<string> failure)
         {
-            if (_registrationService == null || _notificationChannel == null)
-                return;
+            if (_notificationChannel != null)
+            {
+                _notificationChannel.Close();
+                _notificationChannel = null;
+            }
 
             PushToken = "";
-            _notificationChannel.Close();
-            _notificationChannel = null;
-            _registrationService.Unregister();
+            UnregisterRequest request = new UnregisterRequest { AppId = AppID };
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, (obj, arg) => { if (success != null) success(this, null); }, failure);
         }
 
         /// <summary>
         ///  send Tag
         /// </summary>
-        public void SendTag([ReadOnlyArray()] String[] key,[ReadOnlyArray()]  object[] values)
-        {        
-            Tags.SendRequest(key,values);
+        public void SendTag([ReadOnlyArray()] String[] key, [ReadOnlyArray()]  object[] values, EventHandler<string> OnTagSendSuccess, EventHandler<string> OnError)
+        {
+            SetTagsRequest request = new SetTagsRequest { AppId = AppID };
+            request.BuildTags(key, values);
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, (obj, arg) => { if (OnTagSendSuccess != null) OnTagSendSuccess(this, null); }, OnError);
+        }
+
+        public void SendTag(IList<KeyValuePair<string, object>> tagList, EventHandler<string> OnTagSendSuccess, EventHandler<string> OnError)
+        {
+            SetTagsRequest request = new SetTagsRequest { AppId = AppID };
+            request.BuildTags(tagList);
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, (obj, arg) => { if (OnTagSendSuccess != null) OnTagSendSuccess(this, null); }, OnError);
+        }
+
+        public void GetTags(EventHandler<string> OnTagsSuccess, EventHandler<string> OnError)
+        {
+            GetTagsRequest request = new GetTagsRequest { AppId = AppID };
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, (obj, arg) => { if(OnTagsSuccess != null) OnTagsSuccess(this, request.Tags.ToString()); }, OnError);
         }
 
         public void StartGeoLocation()
@@ -200,7 +221,7 @@ namespace PushSDK
 
         public void HandleStartPushStat(string arguments)
         {
-            if (arguments != null)
+            if (arguments != null && arguments.Length != 0)
             {
                 try
                 {
@@ -209,7 +230,13 @@ namespace PushSDK
                     JObject jRoot = JObject.Parse(args);
                     if(jRoot.GetValue("pushwoosh") != null)
                     {
-                        Statistic.SendPushOpen(null);
+						JObject pushwoosh = jRoot["pushwoosh"] as JObject;
+						pushwoosh.Add("onStart", true);
+						UserData = jRoot.ToString(Newtonsoft.Json.Formatting.None);
+						hasPushOnStart = true;
+
+                        StatisticRequest request = new StatisticRequest { AppId = AppID };
+                        PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
                     }
                 }
                 catch { }
@@ -234,15 +261,10 @@ namespace PushSDK
 
         private void SubscribeToPushwoosh(string appID)
         {
-            if (_registrationService == null)
-            {
-                _registrationService = new RegistrationService();
+            string token = _notificationChannel.Uri.ToString();
+            RegistrationRequest request = new RegistrationRequest { AppId = appID, PushToken = token };
 
-                _registrationService.SuccessefulyRegistered += SendTokenToPushwooshSuccess;
-                _registrationService.RegisterError += SendTokenToPushwooshFailed;
-            }
-
-            _registrationService.Register(appID, _notificationChannel.Uri);
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, SendTokenToPushwooshSuccess, SendTokenToPushwooshFailed);
         }
 
         private void ChannelShellToastNotificationReceived(PushNotificationChannel sender, PushNotificationReceivedEventArgs e)
@@ -250,7 +272,8 @@ namespace PushSDK
             Debug.WriteLine("/********************************************************/");
             Debug.WriteLine("Incoming Notification: " + DateTime.Now.ToString());
 
-            Statistic.SendPushOpen(null);
+            StatisticRequest request = new StatisticRequest { AppId = AppID };
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
 
             String notificationContent = String.Empty;
 
@@ -301,6 +324,23 @@ namespace PushSDK
 
         private void PushAccepted(PushNotificationReceivedEventArgs pushEvent)
         {
+			LastPush = pushEvent;
+
+			//get userdata
+			if (pushEvent.NotificationType == PushNotificationType.Toast)
+			{
+				try
+				{
+					XmlDocument doc = new XmlDocument();
+					doc.LoadXml(pushEvent.ToastNotification.Content.GetXml());
+					XmlElement root = doc.DocumentElement;
+					string customData = root.GetAttributeNode("launch").Value;
+					UserData = System.Net.WebUtility.UrlDecode(customData);
+				}
+				catch
+				{}
+			}
+
             if (OnPushAccepted != null)
                 OnPushAccepted(this, pushEvent);
         }

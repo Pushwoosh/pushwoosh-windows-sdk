@@ -71,7 +71,7 @@ namespace PushSDK
                     _geozoneRequest.Lat = e.Position.Coordinate.Latitude;
                     _geozoneRequest.Lon = e.Position.Coordinate.Longitude;
 
-                    await InternalSendRequestAsync(_geozoneRequest, Constants.GeozoneUrl,
+                    await InternalSendRequestAsync(_geozoneRequest,
                         (obj, arg) => {
                             double dist = arg["response"].Value<double>("distance");
                             if (dist > 0)
