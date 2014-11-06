@@ -34,10 +34,7 @@ namespace PushSDK
 
         #region public properties
 
-        /// <summary>
-        /// Get user data from the last push
-        /// </summary>
-        public string UserData { get; private set; }
+        static internal ToastPush StartPush { get; set; }
 
         /// <summary>
         /// Get push token
@@ -59,9 +56,6 @@ namespace PushSDK
 
         private string AppID { get; set; }
 
-		internal PushNotificationReceivedEventArgs LastPush { get; set; }
-		private bool hasPushOnStart = false;
-
         #endregion
 
         #region public events
@@ -69,7 +63,7 @@ namespace PushSDK
         /// <summary>
         /// User wants to see push
         /// </summary>
-        public event EventHandler<PushNotificationReceivedEventArgs> OnPushAccepted;
+        public event EventHandler<ToastPush> OnPushAccepted;
 
         /// <summary>
         /// Push registration succeeded
@@ -93,8 +87,12 @@ namespace PushSDK
             return _instance;
         }
 
-        public static NotificationService GetCurrent(string appID, string pushPage)
+        public static NotificationService GetCurrent(string appID)
         {
+            //OMG JS what are you doing.
+            if(appID == "null")
+                appID = null;
+
             if(appID == null)
                 appID = (String) ApplicationData.Current.LocalSettings.Values["com.pushwoosh.appid"];
 
@@ -110,7 +108,6 @@ namespace PushSDK
         #endregion
 
         /// <param name="appID">PushWoosh application id</param>
-        /// <param name="pushPage">Page on which the navigation is when receiving toast push notification </param>
         private NotificationService(string appID)
         {
             AppID = appID;
@@ -131,6 +128,13 @@ namespace PushSDK
         /// </summary>        
         public async void SubscribeToPushService()
         {
+            //Dispatch start push it happened
+            if (StartPush != null)
+            {
+                FireAcceptedPush(StartPush);
+                StartPush = null;
+            }
+
             //do nothing if already subscribed
             if (_notificationChannel != null)
                 return;
@@ -143,7 +147,7 @@ namespace PushSDK
 
                 Debug.WriteLine("Push Notification channel created successfully: " + PushToken);
 
-                //Register to UriUpdated event - occurs when channel successfully opens
+                //Register to push received event
                 _notificationChannel.PushNotificationReceived += ChannelShellToastNotificationReceived;
 
                 //Register device on Pushwoosh
@@ -158,11 +162,6 @@ namespace PushSDK
                 if(OnPushTokenFailed != null)
                     OnPushTokenFailed(this, ex.Message);
             }
-
-			if(OnPushAccepted != null && hasPushOnStart)
-			{
-				OnPushAccepted(this, null);
-			}
         }
 
         /// <summary>
@@ -214,29 +213,38 @@ namespace PushSDK
             GeoZone.Stop();
         }
 
+        public void TrackInAppPurchase(string productId, double price, string currency)
+        {
+            Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+
+            SendPurchaseRequest request = new SendPurchaseRequest { AppId = AppID, ProductIdentifier = productId, Currency = currency, Price = price, Quantity = 1, DateTimeStamp = unixTimestamp};
+            PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
+        }
+
         public void SetHost(string host)
         {
             Constants.setHost(host);
         }
 
-        public void HandleStartPushStat(string arguments)
+        static public void HandleStartPush(string arguments)
         {
             if (arguments != null && arguments.Length != 0)
             {
                 try
                 {
                     //Sample to handle push custom data on start
-                    String args = System.Net.WebUtility.UrlDecode(arguments);
-                    JObject jRoot = JObject.Parse(args);
-                    if(jRoot.GetValue("pushwoosh") != null)
+                    ToastPush push = SDKHelpers.ParsePushData(arguments);
+                    if(push != null)
                     {
-						JObject pushwoosh = jRoot["pushwoosh"] as JObject;
-						pushwoosh.Add("onStart", true);
-						UserData = jRoot.ToString(Newtonsoft.Json.Formatting.None);
-						hasPushOnStart = true;
+                        push.OnStart = true;
+                        NotificationService.StartPush = push;
 
-                        StatisticRequest request = new StatisticRequest { AppId = AppID };
-                        PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
+                        NotificationService service = NotificationService.GetCurrent(null);
+                        if(service != null)
+                        {
+                            StatisticRequest request = new StatisticRequest { AppId = service.AppID, Hash = push.Hash };
+                            PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
+                        }
                     }
                 }
                 catch { }
@@ -272,11 +280,9 @@ namespace PushSDK
             Debug.WriteLine("/********************************************************/");
             Debug.WriteLine("Incoming Notification: " + DateTime.Now.ToString());
 
-            StatisticRequest request = new StatisticRequest { AppId = AppID };
-            PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
-
             String notificationContent = String.Empty;
 
+            ToastPush push = null;
             String type = String.Empty;
             switch (e.NotificationType)
             {
@@ -294,6 +300,21 @@ namespace PushSDK
                 case PushNotificationType.Toast:
 
                     notificationContent = e.ToastNotification.Content.GetXml();
+
+                    try
+                    {
+                        IXmlNode node = e.ToastNotification.Content.DocumentElement.SelectSingleNode("/toast");
+                        IXmlNode launchAttr = node.Attributes.GetNamedItem("launch");
+                        String args = launchAttr.NodeValue.ToString();
+
+                        push = SDKHelpers.ParsePushData(args);
+
+                        //Sample to handle push custom data on start
+                        StatisticRequest request2 = new StatisticRequest { AppId = AppID, Hash = push.Hash };
+                        PushwooshAPIServiceBase.InternalSendRequestAsync(request2, null, null);
+                    }
+                    catch { }
+
                     type = "Toast";
                     break;
 
@@ -302,6 +323,13 @@ namespace PushSDK
                     type = "Raw";
                     break;
             }
+
+            if(push == null)
+            {
+                StatisticRequest request2 = new StatisticRequest { AppId = AppID };
+                PushwooshAPIServiceBase.InternalSendRequestAsync(request2, null, null);
+            }
+
             Debug.WriteLine("Received {0} notification", type);
             Debug.WriteLine("Notification content: " + notificationContent);
 
@@ -309,42 +337,38 @@ namespace PushSDK
                 {
                     try
                     {
-                        PushAccepted(e);
+                        if(push != null)
+                            FireAcceptedPush(push);
                     }
                     catch (Exception)
                     {
                         //Noting todo here
                     }
                 });
-
-            Debug.WriteLine("/********************************************************/");
-
-
         }
 
-        private void PushAccepted(PushNotificationReceivedEventArgs pushEvent)
+        internal void FireAcceptedPush(ToastPush push)
         {
-			LastPush = pushEvent;
+            if (push.Url != null || (push.HtmlId != -1 && push.HtmlId != 0))
+            {
+                Uri uri = null;
 
-			//get userdata
-			if (pushEvent.NotificationType == PushNotificationType.Toast)
-			{
-				try
-				{
-					XmlDocument doc = new XmlDocument();
-					doc.LoadXml(pushEvent.ToastNotification.Content.GetXml());
-					XmlElement root = doc.DocumentElement;
-					string customData = root.GetAttributeNode("launch").Value;
-					UserData = System.Net.WebUtility.UrlDecode(customData);
-				}
-				catch
-				{}
-			}
+                if (push.Url != null)
+                    uri = push.Url;
+                else if (push.HtmlId != -1)
+                    uri = new Uri(Constants.HtmlPageUrl + push.HtmlId, UriKind.Absolute);
 
-            if (OnPushAccepted != null)
-                OnPushAccepted(this, pushEvent);
+                Launcher.LaunchUriAsync(uri);
+            }
+
+            PushAccepted(push);
         }
 
+        private void PushAccepted(ToastPush push)
+        {
+           if (OnPushAccepted != null)
+                OnPushAccepted(this, push);
+        }
 
         #endregion
     }

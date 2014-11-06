@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Windows.Networking.Connectivity;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Newtonsoft.Json.Linq;
 
 namespace PushSDK.Classes
 {
@@ -32,24 +33,46 @@ namespace PushSDK.Classes
             return _deviceId;
         }
 
-        internal static ToastPush ParsePushData(string url)
+        internal static ToastPush ParsePushData(String args)
         {
-            Dictionary<string, string> pushParams = ParseQueryString(Uri.UnescapeDataString(url));
-            ToastPush toast = new ToastPush
-                       {
-                           Content = pushParams.ContainsKey("content") ? pushParams["content"] : string.Empty,
-                           Hash = pushParams.ContainsKey("p") ? pushParams["p"] : string.Empty,
-                           HtmlId = pushParams.ContainsKey("h") ? Convert.ToInt32(pushParams["h"]) : -1,
-                           UserData = pushParams.ContainsKey("u") ? pushParams["u"] : string.Empty
-                       };
-
             try
             {
-                toast.Url = pushParams.ContainsKey("l") ? new Uri(pushParams["l"], UriKind.Absolute) : null;
-            }
-            catch {}
+                args = System.Net.WebUtility.UrlDecode(args);
+                args = args.Replace("/PushSDK;component/Controls/PushPage.xaml?", "");
 
-            return toast;
+                JObject jRoot = JObject.Parse(args);
+
+                ToastPush toast = new ToastPush();
+
+                if (jRoot["pushwoosh"] == null)
+                    return toast;
+
+                jRoot = (JObject)jRoot["pushwoosh"];
+
+                if (jRoot["content"] != null)
+                    toast.Content = jRoot["content"].ToString();
+
+                if (jRoot["p"] != null)
+                    toast.Hash = jRoot["p"].ToString();
+
+                if (jRoot["h"] != null)
+                    toast.HtmlId = jRoot["h"].ToObject<int>();
+
+                if (jRoot["data"] != null)
+                    toast.UserData = jRoot["data"].ToString();
+
+                try
+                {
+                    if (jRoot["l"] != null)
+                        toast.Url = new Uri(jRoot["l"].ToString(), UriKind.Absolute);
+                }
+                catch { }
+
+                return toast;
+            }
+            catch { }
+
+            return null;
         }
 
         private static Dictionary<string,string> ParseQueryString(string s)
