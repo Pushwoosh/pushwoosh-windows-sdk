@@ -1,3 +1,6 @@
+Current version: 1.3.0
+=========================
+Start push with custom data supported, per push stats supported.
 Current version: 1.2.1
 =========================
 new sdk build
