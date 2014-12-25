@@ -1,3 +1,6 @@
+Current version: 2.0.0
+=========================
+Windows 8/Windows Phone 8.1 WNS SDK
 Current version: 1.3.0
 =========================
 Start push with custom data supported, per push stats supported.
