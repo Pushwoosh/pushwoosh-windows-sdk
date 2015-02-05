@@ -242,6 +242,12 @@ namespace PushSDK
                         NotificationService service = NotificationService.GetCurrent(null);
                         if(service != null)
                         {
+                            if(service.OnPushAccepted != null)
+                            {
+                                service.FireAcceptedPush(StartPush);
+                                NotificationService.StartPush = null;
+                            }
+
                             StatisticRequest request = new StatisticRequest { AppId = service.AppID, Hash = push.Hash };
                             PushwooshAPIServiceBase.InternalSendRequestAsync(request, null, null);
                         }

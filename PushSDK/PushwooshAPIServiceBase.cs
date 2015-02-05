@@ -18,6 +18,9 @@ namespace PushSDK
     
             HttpClient httpClient = new HttpClient();
             string requestString = String.Format("{{ \"request\":{0}}}", JsonConvert.SerializeObject(request));
+
+            Debug.WriteLine("Request: " + requestString);
+
             HttpContent httpContent = new StringContent(requestString, System.Text.Encoding.UTF8, "application/x-www-form-urlencoded");
             string webResponse = null;
             try

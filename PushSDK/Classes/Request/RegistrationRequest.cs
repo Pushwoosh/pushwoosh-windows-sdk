@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using Newtonsoft.Json;
+using System.Xml.Linq;
+using Windows.Devices.Enumeration.Pnp;
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Controls;
 using System.Text.RegularExpressions;
@@ -32,6 +34,39 @@ namespace PushSDK.Classes
         public double Timezone
         {
             get { return TimeZoneInfo.Local.BaseUtcOffset.TotalSeconds; }
+        }
+
+        [JsonProperty("os_version")]
+        public string OSVersion
+        {
+            get {
+                Windows.Security.ExchangeActiveSyncProvisioning.EasClientDeviceInformation deviceInfo = new Windows.Security.ExchangeActiveSyncProvisioning.EasClientDeviceInformation();
+                string os = deviceInfo.OperatingSystem;
+                return os;
+            }
+        }
+
+        private const string ModelNameKey = "System.Devices.ModelName";
+        private const string RootContainer = "{00000000-0000-0000-FFFF-FFFFFFFFFFFF}";
+
+        /// <summary>
+        /// Get the name of the model of this computer.
+        /// </summary>
+        /// <example>Surface with Windows 8</example>
+        /// <returns>The name of the model of this computer.</returns>
+        public static async Task<string> GetDeviceModelAsync()
+        {
+            var rootContainer = await PnpObject.CreateFromIdAsync(PnpObjectType.DeviceContainer, RootContainer, new[] { ModelNameKey });
+            return (string)rootContainer.Properties[ModelNameKey];
+        }
+
+        [JsonProperty("device_model")]
+        public string DeviceModel
+        {
+            get {
+                string model = GetDeviceModelAsync().Result;
+                return model;
+            }
         }
 
         [JsonProperty("app_version")]
