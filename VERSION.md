@@ -1,3 +1,6 @@
+Current version: 2.1.0
+=========================
+Fixed possible deadlock on device subscription to the service
 Current version: 2.0.0
 =========================
 Windows 8/Windows Phone 8.1 WNS SDK
