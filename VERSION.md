@@ -1,3 +1,6 @@
+Current version: 2.2.0
+=========================
+Windows 10 support
 Current version: 2.1.0
 =========================
 Fixed possible deadlock on device subscription to the service
