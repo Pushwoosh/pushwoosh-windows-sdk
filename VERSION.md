@@ -1,5 +1,8 @@
 Current version: 2.2.0
 =========================
+Push notification received event
+Current version: 2.2.0
+=========================
 Windows 10 support
 Current version: 2.1.0
 =========================
