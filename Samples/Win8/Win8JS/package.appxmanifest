@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest">
+  <Identity Name="ArelloMobile.Pushwooshsampleapp" Version="1.0.0.1" Publisher="CN=2FCDA0AA-0144-4189-9D7C-DAD21512D308" />
+  <Properties>
+    <DisplayName>Pushwoosh sample app</DisplayName>
+    <PublisherDisplayName>Arello Mobile</PublisherDisplayName>
+    <Logo>images\50x50.png</Logo>
+  </Properties>
+  <Prerequisites>
+    <OSMinVersion>6.2.1</OSMinVersion>
+    <OSMaxVersionTested>6.2.1</OSMaxVersionTested>
+  </Prerequisites>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="App" StartPage="default.html">
+      <VisualElements DisplayName="Pushwoosh sample app" Logo="images\150x150.png" SmallLogo="images\30x30.png" Description="Win8JS" ForegroundText="light" BackgroundColor="#464646" ToastCapable="true">
+        <DefaultTile ShowName="allLogos" WideLogo="images\310x150.png" />
+        <SplashScreen Image="images\620x300.jpg" />
+        <InitialRotationPreference>
+          <Rotation Preference="landscape" />
+        </InitialRotationPreference>
+      </VisualElements>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <DeviceCapability Name="location" />
+  </Capabilities>
+</Package>

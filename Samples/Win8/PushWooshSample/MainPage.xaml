@@ -1,0 +1,64 @@
+﻿<Page
+    x:Class="PushWooshSample.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:PushWooshSample"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    
+
+    <Grid Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
+        <StackPanel x:Name="LayoutRoot"
+                    Margin="10,10,10,0"
+                    Background="Transparent">
+            
+            <TextBlock Margin="0,0,0,0"
+                       HorizontalAlignment="Center"
+                       FontFamily="Segoe UI"
+                       FontSize="20"
+                       Text="Waiting for push notification"
+                       TextWrapping="Wrap" />
+            <TextBlock Margin="0,30,0,0"
+            	FontSize="14"
+            	Text="Push token:"
+            	TextWrapping="Wrap" />
+            <TextBlock x:Name="tbPushToken" Margin="0"
+            	FontSize="11"
+            	TextWrapping="Wrap" />
+            <TextBlock Margin="0,10,0,0"
+                       FontSize="14"
+                       Text="Tag title:"
+                       TextWrapping="Wrap" />
+            <TextBox x:Name="tbTagTitle"
+                     FontSize="14"
+                     TextWrapping="Wrap"
+                     Text="FavNumber"/>
+            <TextBlock FontSize="14"
+                       Text="Tag value:"
+                       TextWrapping="Wrap" />
+            <TextBox x:Name="tbTagValue" TextWrapping="Wrap" Text="123" />
+            <Button x:Name="btnSendTag"
+                    Width="300"
+                    HorizontalAlignment="Left"
+                    Click="btnSendTag_Click"
+                    Content="Send tag" Height="50" />
+            <CheckBox Checked="CheckBox_Checked"
+                      Content="Geozone"
+                      Unchecked="CheckBox_Unchecked" Margin="0,21,0,0" />
+            <StackPanel Orientation="Horizontal"/>
+            <StackPanel>
+                <TextBlock Text="PW Application ID" FontFamily="Segoe UI" FontSize="20" Margin="0,15,0,0"/>
+                <TextBox x:Name="PWID" Text="722EA-2CCC4" FontFamily="Segoe UI" FontSize="16" Margin="0,5,0,0"/>
+                <TextBlock Text="Host" FontFamily="Segoe UI" FontSize="20" Margin="0,15,0,0"/>
+                <TextBox x:Name="Host" Text ="https://cp.pushwoosh.com/" FontFamily="Segoe UI" FontSize="16" Margin="0,5,0,0"/>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="SubButton" Width="200" Height="50" Content="Subscribe" Tapped="Subscribe_Tapped" Margin="0,10,0,0"/>
+                    <Button x:Name="UnSubButton" IsEnabled="False" Width="200" Height="50" Click="UnSubButton_Click" Content="Unsubscribe" Margin="0,10,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+    
+</Page>

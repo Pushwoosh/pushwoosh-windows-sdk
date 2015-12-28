@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Win8JS</title>
+
+    <!-- WinJS references -->
+    <link href="//Microsoft.WinJS.1.0/css/ui-dark.css" rel="stylesheet" />
+    <script src="//Microsoft.WinJS.1.0/js/base.js"></script>
+    <script src="//Microsoft.WinJS.1.0/js/ui.js"></script>
+
+    <!-- Win8JS references -->
+    <link href="/css/default.css" rel="stylesheet" />
+    <script src="/js/default.js"></script>
+</head>
+<body>
+    <p>Sample Win8 JS Push usage</p>
+
+    <div>
+    <progress id='p' data-win-control='Rozga.WinJS.RefProgressControl' style="visibility:collapse; width:500px"></progress>
+    </div>
+
+    <div>PushWoosh application ID:</div>
+    <input id="PwAppId" value="722EA-2CCC4" style="width: 500px; margin: 20px">
+    <div>PushWoosh host:</div>
+    <input id="host" value="https://cp.pushwoosh.com/" style="width: 500px; margin: 20px">
+    <div id="subscribeBlock">
+        <button id="subscribe" onclick="subscribeClick(event)" style="width: 300px; margin-left: 20px"><span>Subscribe</span></button>
+    </div>
+    <div style="margin-top: 20px; margin-bottom: 20px">
+        User token:
+    </div>
+    <div id="userToken">wait token...</div>
+    <div id="tagBlock">
+        <div style="margin-top: 20px">
+            Tag title:
+        </div>
+        <input id="tagTitle" style="width: 500px; margin: 20px" value="FavNumber">
+        <div>
+            Tag value:
+        </div>
+        <input id="tagValue" style="width: 500px; margin: 20px" value="123" />
+        <div>
+            <button id="sendTag" onclick="sendingTagClick(event)" style="width: 300px; margin-left: 20px"><span>Send tag</span></button>
+        </div>
+    </div>
+    <div id="geozoneBlock" style="margin-top: 20px">
+        <div>
+            Geozones enabled:
+        </div>
+        <input id="geozone" type="checkbox" onclick="setGeozone()" style="margin-left: 20px" />Geozones
+    </div>
+    <div id="unsubscribeBlock" style="margin-top: 20px">
+        <button id="unsubscribe" onclick="unsubscribeClick(event)" style="width: 300px; margin-left: 20px"><span>Unsubscribe</span></button>
+    </div>
+</body>
+</html>
