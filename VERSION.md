@@ -1,3 +1,6 @@
+Current version: 2.2.1 
+========================= 
+GeoLocation stability fix 
 Current version: 2.2.0
 =========================
 Push notification received event
