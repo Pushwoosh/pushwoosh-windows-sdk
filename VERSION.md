@@ -1,3 +1,6 @@
+Current version: 2.2.2 
+========================= 
+Response parsing stability fixes 
 Current version: 2.2.1 
 ========================= 
 GeoLocation stability fix 
