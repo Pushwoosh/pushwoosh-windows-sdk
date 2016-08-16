@@ -1,3 +1,6 @@
+Current version: 2.3.0 
+========================= 
+SetBadgeNumber method 
 Current version: 2.2.2 
 ========================= 
 Response parsing stability fixes 
