@@ -1,3 +1,6 @@
+Current version: 2.4.0 
+========================= 
+Optional foreground push handling for WNS 
 Current version: 2.3.0 
 ========================= 
 SetBadgeNumber method 
