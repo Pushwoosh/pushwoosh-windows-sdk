@@ -1,3 +1,6 @@
+Current version: 2.4.1 
+========================= 
+Fixed UnsubscribeFromPushes success callback on WinRT 
 Current version: 2.4.0 
 ========================= 
 Optional foreground push handling for WNS 
