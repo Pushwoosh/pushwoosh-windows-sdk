@@ -1,3 +1,6 @@
+Current version: 2.5.0 
+Updated Windows 10 SDK and sample
+========================= 
 Current version: 2.4.1 
 ========================= 
 Fixed UnsubscribeFromPushes success callback on WinRT 

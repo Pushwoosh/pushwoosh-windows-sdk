@@ -1,20 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
+﻿using Windows.UI.Xaml.Controls;
 using PushSDK;
-
-// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace PushWooshSample
 {
@@ -26,18 +11,28 @@ namespace PushWooshSample
         public MainPage()
         {
             this.InitializeComponent();
-            
+
             NotificationService service = PushSDK.NotificationService.GetCurrent("4FC89B6D14A655.46488481");
-            service.OnPushAccepted += (sender, pushNotification) => {
+
+            service.OnPushReceived += (sender, pushNotification) =>
+            {
                 //code to handle push notification
                 string pushString = pushNotification.ToString(); //will return json push payload
             };
 
-            service.OnPushTokenReceived += (sender, pushToken) => {
+            service.OnPushAccepted += (sender, pushNotification) =>
+            {
+                //code to handle push notification
+                string pushString = pushNotification.ToString(); //will return json push payload
+            };
+
+            service.OnPushTokenReceived += (sender, pushToken) =>
+            {
                 //code to handle push token
             };
 
-            service.OnPushTokenFailed += (sender, errorMessage) => {
+            service.OnPushTokenFailed += (sender, errorMessage) =>
+            {
                 //code to handle push subscription failure
             };
 
