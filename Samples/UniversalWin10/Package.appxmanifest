@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
-  <Identity Name="ArelloMobile.PushwooshSample" Publisher="CN=2FCDA0AA-0144-4189-9D7C-DAD21512D308" Version="1.1.0.0" />
+  <Identity Name='57835Fectum.PushwooshTestingApp' Publisher='CN=C3B4DCBC-F2C0-4BEC-94AE-0BF475170471'  Version="1.1.0.0"/>
   <mp:PhoneIdentity PhoneProductId="fab961b9-bbac-447a-9174-b4992fc3bd18" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>001 Pushwoosh sample app</DisplayName>
@@ -23,6 +23,6 @@
     </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="internetClient" />
-  </Capabilities>
+  
+  <Capability Name="internetClient"/></Capabilities>
 </Package>

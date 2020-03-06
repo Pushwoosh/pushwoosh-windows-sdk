@@ -12,7 +12,7 @@ namespace PushWooshSample
         {
             this.InitializeComponent();
 
-            NotificationService service = PushSDK.NotificationService.GetCurrent("4FC89B6D14A655.46488481");
+            NotificationService service = PushSDK.NotificationService.GetCurrent("DC533-F5DA4");
 
             service.OnPushReceived += (sender, pushNotification) =>
             {
